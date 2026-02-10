@@ -1,13 +1,16 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import DocumentsPage from "./pages/DocumentsPage";
+import InvoicesPage from "./pages/InvoicesPage";
 import ViewerPage from "./pages/ViewerPage";
 
 function App() {
   return (
     <Routes>
-      <Route path="/documents" element={<DocumentsPage />} />
-      <Route path="/documents/:id" element={<ViewerPage />} />
-      <Route path="*" element={<Navigate to="/documents" replace />} />
+      <Route path="/invoices" element={<InvoicesPage />} />
+      <Route path="/viewer" element={<ViewerPage />} />
+      <Route path="/viewer/:id" element={<ViewerPage />} />
+      {/* Keep old routes working */}
+      <Route path="/invoices/:id" element={<ViewerPage />} />
+      <Route path="*" element={<Navigate to="/invoices" replace />} />
     </Routes>
   );
 }

@@ -8,9 +8,9 @@ class Settings(BaseSettings):
     # Database
     db_host: str = "localhost"
     db_port: int = 3306
-    db_name: str = "result_viewer"
-    db_user: str = "root"
-    db_pass: str = "changeme"
+    db_name: str = "telegram"
+    db_user: str = "n8n_user"
+    db_pass: str = "eloading!N8N"
 
     # PDF root directory
     pdf_root: str = "/data/pdfs"

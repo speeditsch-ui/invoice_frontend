@@ -78,10 +78,16 @@ body {
   padding: 2rem 1.5rem;
 }
 
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
 .page-header h1 {
   font-size: 1.75rem;
   font-weight: 700;
-  margin-bottom: 1.25rem;
 }
 
 /* ── Search Bar ──────────────────────────────────────── */
@@ -120,7 +126,11 @@ body {
   background: var(--primary-hover);
 }
 
-/* ── Document Table ──────────────────────────────────── */
+/* ── Document / Invoice Table ────────────────────────── */
+.table-scroll {
+  overflow-x: auto;
+}
+
 .doc-table {
   width: 100%;
   border-collapse: collapse;
@@ -128,22 +138,26 @@ body {
   border-radius: var(--radius);
   overflow: hidden;
   box-shadow: var(--shadow);
+  font-size: 0.875rem;
 }
 
 .doc-table th,
 .doc-table td {
-  padding: 0.65rem 1rem;
+  padding: 0.55rem 0.75rem;
   text-align: left;
   border-bottom: 1px solid var(--border);
+  white-space: nowrap;
 }
 
 .doc-table th {
   background: #f9fafb;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: var(--text-muted);
+  position: sticky;
+  top: 0;
 }
 
 .doc-table tr:last-child td {
@@ -152,6 +166,25 @@ body {
 
 .doc-table tr:hover td {
   background: #f1f5f9;
+}
+
+.col-right {
+  text-align: right !important;
+}
+
+.col-id {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.col-email {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-muted {
+  color: var(--text-muted);
 }
 
 .empty-row {
@@ -245,6 +278,21 @@ body {
   overflow: hidden;
 }
 
+.viewer-layout-3col {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.viewer-filelist {
+  width: 280px;
+  min-width: 220px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
 .viewer-pdf {
   flex: 1;
   overflow: auto;
@@ -252,11 +300,12 @@ body {
 }
 
 .viewer-fields {
-  width: 420px;
-  min-width: 320px;
+  width: 380px;
+  min-width: 300px;
   border-left: 1px solid var(--border);
   background: var(--surface);
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 /* ── PDF Viewer ──────────────────────────────────────── */
@@ -455,10 +504,202 @@ body {
   background: #eff6ff;
 }
 
+/* ── File List Sidebar ───────────────────────────────── */
+.file-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.file-list-header {
+  padding: 0.75rem 0.75rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.file-list-header h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.file-list-filter {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.file-list-filter input {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  outline: none;
+  transition: border 0.15s;
+}
+
+.file-list-filter input:focus {
+  border-color: var(--primary);
+}
+
+.file-list-items {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.file-list-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 1.5rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.1s;
+}
+
+.file-item:hover {
+  background: #f1f5f9;
+}
+
+.file-item.active {
+  background: #eff6ff;
+  border-left: 3px solid var(--primary);
+}
+
+.file-item-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  opacity: 0.6;
+}
+
+.file-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.file-item-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-item-meta {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-item-badge {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 700;
+  background: var(--primary);
+  color: white;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── No PDF placeholder ─────────────────────────────── */
+.no-pdf {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.no-pdf-message {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.no-pdf-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+/* ── Info Section (read-only) ───────────────────────── */
+.info-section {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.info-section h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.75rem;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  font-size: 0.8rem;
+}
+
+.info-label {
+  flex-shrink: 0;
+  width: 90px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.info-value {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.info-value.monospace {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.7rem;
+}
+
+.btn-copy-sm {
+  padding: 0.15rem 0.35rem;
+  font-size: 0.75rem;
+}
+
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 768px) {
   .viewer-layout {
     flex-direction: column;
+  }
+
+  .viewer-layout-3col {
+    flex-direction: column;
+  }
+
+  .viewer-filelist {
+    width: 100%;
+    min-width: unset;
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
   }
 
   .viewer-fields {

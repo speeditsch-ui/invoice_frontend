@@ -1,36 +1,21 @@
-version: "3.8"
+# Verwendet die System-MariaDB (z. B. mariadb.service auf dem Host).
+# DB_HOST=host.docker.internal verbindet aus dem Container zur MariaDB auf dem Host.
 
 services:
-  # ── MariaDB (optional – remove if using external DB) ──
-  mariadb:
-    image: mariadb:11
-    restart: unless-stopped
-    environment:
-      MARIADB_ROOT_PASSWORD: ${DB_PASS:-changeme}
-      MARIADB_DATABASE: ${DB_NAME:-result_viewer}
-    ports:
-      - "3306:3306"
-    volumes:
-      - mariadb_data:/var/lib/mysql
-      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   # ── Backend (FastAPI) ──────────────────────────────────
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
-      DB_HOST: ${DB_HOST:-mariadb}
+      DB_HOST: ${DB_HOST:-host.docker.internal}
       DB_PORT: ${DB_PORT:-3306}
-      DB_NAME: ${DB_NAME:-result_viewer}
-      DB_USER: ${DB_USER:-root}
-      DB_PASS: ${DB_PASS:-changeme}
+      DB_NAME: ${DB_NAME:-telegram}
+      DB_USER: ${DB_USER:-n8n_user}
+      DB_PASS: ${DB_PASS:-eloading!N8N}
       PDF_ROOT: /data/pdfs
       API_KEY: ${API_KEY:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173}
@@ -38,9 +23,6 @@ services:
       - "8000:8000"
     volumes:
       - ${PDF_ROOT:-./sample_pdfs}:/data/pdfs:ro
-    depends_on:
-      mariadb:
-        condition: service_healthy
 
   # ── Frontend (React via nginx) ─────────────────────────
   frontend:
@@ -52,6 +34,3 @@ services:
       - "8080:80"
     depends_on:
       - backend
-
-volumes:
-  mariadb_data:

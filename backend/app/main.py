@@ -8,9 +8,9 @@ from app.security import ApiKeyMiddleware
 from app.routers import documents
 
 app = FastAPI(
-    title="Result Viewer API",
+    title="Invoice Viewer API",
     version="1.0.0",
-    description="API for viewing and editing extracted document fields.",
+    description="API for viewing and editing invoice data.",
 )
 
 # ── CORS ─────────────────────────────────────────────────

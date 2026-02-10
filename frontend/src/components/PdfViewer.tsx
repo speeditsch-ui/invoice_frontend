@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-// Configure pdf.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
+import type { Options } from "react-pdf/src/shared/types.ts";
+
+// Use a plain .js copy of the worker to avoid .mjs MIME type issues with nginx.
+// The file is copied to dist/pdf.worker.min.js by the vite plugin in vite.config.ts.
+pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
 interface Props {
   url: string;
@@ -30,10 +30,14 @@ export default function PdfViewer({ url }: Props) {
   };
 
   const apiKey = import.meta.env.VITE_API_KEY;
-  const httpHeaders: Record<string, string> = {};
-  if (apiKey) {
-    httpHeaders["X-API-Key"] = apiKey;
-  }
+
+  const pdfOptions: Options = useMemo(() => {
+    const headers: Record<string, string> = {};
+    if (apiKey) {
+      headers["X-API-Key"] = apiKey;
+    }
+    return { httpHeaders: headers };
+  }, [apiKey]);
 
   return (
     <div className="pdf-viewer">
@@ -68,7 +72,8 @@ export default function PdfViewer({ url }: Props) {
 
       <div className="pdf-document-wrapper">
         <Document
-          file={{ url, httpHeaders }}
+          file={{ url }}
+          options={pdfOptions}
           onLoadSuccess={onLoadSuccess}
           onLoadError={onLoadError}
           loading={<p className="loading-text">PDF wird geladen…</p>}

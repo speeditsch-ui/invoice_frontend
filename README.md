@@ -17,7 +17,7 @@ Eine WebApp zum Anzeigen lokal gespeicherter PDFs mit editierbaren, extrahierten
 
 - **Frontend**: React + Vite + TypeScript, ausgeliefert via nginx
 - **Backend**: FastAPI (Python), SQLAlchemy + PyMySQL
-- **Datenbank**: MariaDB (im Docker Compose enthalten oder extern)
+- **Datenbank**: MariaDB (extern, z. B. System-Instanz auf dem Host)
 
 ## Schnellstart mit Docker Compose
 
@@ -50,7 +50,8 @@ docker compose up --build -d
 
 - **Frontend**: http://localhost:8080
 - **Backend API**: http://localhost:8000
-- **MariaDB**: localhost:3306
+
+Voraussetzung: MariaDB läuft auf dem Host (z. B. `mariadb.service`). Das Backend verbindet sich per `DB_HOST=host.docker.internal` dorthin.
 
 ### 5. Stoppen
 
@@ -60,20 +61,20 @@ docker compose down
 
 ## Umgebungsvariablen
 
-| Variable       | Default          | Beschreibung                                      |
-|----------------|------------------|---------------------------------------------------|
-| `DB_HOST`      | `mariadb`        | Datenbank-Host (im Compose: Service-Name)         |
-| `DB_PORT`      | `3306`           | Datenbank-Port                                    |
-| `DB_NAME`      | `result_viewer`  | Datenbankname                                     |
-| `DB_USER`      | `root`           | Datenbank-Benutzer                                |
-| `DB_PASS`      | `changeme`       | Datenbank-Passwort                                |
+| Variable       | Default                   | Beschreibung                                      |
+|----------------|---------------------------|---------------------------------------------------|
+| `DB_HOST`      | `host.docker.internal`    | Datenbank-Host (mit Docker: Host-MariaDB; lokal: `localhost`) |
+| `DB_PORT`      | `3306`                    | Datenbank-Port                                    |
+| `DB_NAME`      | `result_viewer`           | Datenbankname                                     |
+| `DB_USER`      | `root`                    | Datenbank-Benutzer                                |
+| `DB_PASS`      | `changeme`                | Datenbank-Passwort                                |
 | `PDF_ROOT`     | `./sample_pdfs`  | Pfad zum PDF-Ordner auf dem Host                  |
 | `API_KEY`      | *(leer)*         | Optionaler API-Key; wenn gesetzt, muss jeder /api-Request den Header `X-API-Key` mitschicken |
 | `CORS_ORIGINS` | `http://localhost:8080,http://localhost:5173` | Erlaubte CORS-Origins (kommasepariert) |
 
 ## Datenbank-Schema
 
-Das Schema wird automatisch beim ersten Start von MariaDB ausgeführt (`db/init.sql`):
+Das Projekt nutzt eine **externe MariaDB** (z. B. die System-Instanz: `mariadb.service`). Schema und Tabellen liegen in `db/init.sql` – bei einer neuen Datenbank einmalig ausführen (z. B. `mysql -u root -p result_viewer < db/init.sql`).
 
 - **`documents`**: `id`, `file_path`, `file_name`, `created_at`
 - **`document_fields`**: `document_id`, `field_key`, `field_value`, `updated_at` (PK: document_id + field_key)

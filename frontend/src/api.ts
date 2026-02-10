@@ -1,13 +1,14 @@
 /**
- * Thin API client for the Result Viewer backend.
+ * Thin API client for the Invoice Viewer backend.
  * Base URL is configurable via VITE_API_BASE_URL env variable.
  */
 
 import type {
-  DocumentListResponse,
-  DocumentDetail,
-  FieldsUpdateRequest,
-  FieldsUpdateResponse,
+  InvoiceListResponse,
+  InvoiceDetail,
+  InvoiceUpdateRequest,
+  InvoiceUpdateResponse,
+  FileListResponse,
 } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -31,45 +32,58 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-/** List documents with optional search, limit, offset. */
-export async function fetchDocuments(
+/** List invoices with optional search, limit, offset. */
+export async function fetchInvoices(
   search?: string,
   limit = 50,
   offset = 0
-): Promise<DocumentListResponse> {
+): Promise<InvoiceListResponse> {
   const params = new URLSearchParams();
   if (search) params.set("search", search);
   params.set("limit", String(limit));
   params.set("offset", String(offset));
 
-  const res = await fetch(`${BASE}/api/documents?${params}`, {
+  const res = await fetch(`${BASE}/api/invoices?${params}`, {
     headers: headers(),
   });
-  return handleResponse<DocumentListResponse>(res);
+  return handleResponse<InvoiceListResponse>(res);
 }
 
-/** Get single document with fields. */
-export async function fetchDocument(id: number): Promise<DocumentDetail> {
-  const res = await fetch(`${BASE}/api/documents/${id}`, {
+/** Get single invoice with all fields. */
+export async function fetchInvoice(id: number): Promise<InvoiceDetail> {
+  const res = await fetch(`${BASE}/api/invoices/${id}`, {
     headers: headers(),
   });
-  return handleResponse<DocumentDetail>(res);
+  return handleResponse<InvoiceDetail>(res);
 }
 
 /** Get the URL for streaming the PDF. */
 export function pdfUrl(id: number): string {
-  return `${BASE}/api/documents/${id}/pdf`;
+  return `${BASE}/api/invoices/${id}/pdf`;
 }
 
-/** Update (upsert) document fields. */
-export async function updateFields(
+/** Update invoice fields. */
+export async function updateInvoice(
   id: number,
-  payload: FieldsUpdateRequest
-): Promise<FieldsUpdateResponse> {
-  const res = await fetch(`${BASE}/api/documents/${id}/fields`, {
+  payload: InvoiceUpdateRequest
+): Promise<InvoiceUpdateResponse> {
+  const res = await fetch(`${BASE}/api/invoices/${id}`, {
     method: "PUT",
     headers: headers(),
     body: JSON.stringify(payload),
   });
-  return handleResponse<FieldsUpdateResponse>(res);
+  return handleResponse<InvoiceUpdateResponse>(res);
+}
+
+/** List PDF files from the inbox folder. */
+export async function fetchFiles(): Promise<FileListResponse> {
+  const res = await fetch(`${BASE}/api/files`, {
+    headers: headers(),
+  });
+  return handleResponse<FileListResponse>(res);
+}
+
+/** Get the URL for streaming a PDF by filename. */
+export function filePdfUrl(filename: string): string {
+  return `${BASE}/api/files/${encodeURIComponent(filename)}/pdf`;
 }
