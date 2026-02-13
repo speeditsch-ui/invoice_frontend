@@ -62,3 +62,26 @@ export interface FileListResponse {
   total: number;
   files: FileEntry[];
 }
+
+/** Supplier-by-email types */
+
+export interface SupplierByEmail {
+  id: number;
+  supplier_name: string;
+  email: string;
+}
+
+export interface SupplierByEmailListResponse {
+  total: number;
+  suppliers: SupplierByEmail[];
+}
+
+export interface SupplierByEmailCreate {
+  supplier_name: string;
+  email: string;
+}
+
+export interface DeleteResponse {
+  deleted: boolean;
+  message: string;
+}

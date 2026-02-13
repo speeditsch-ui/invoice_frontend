@@ -9,6 +9,10 @@ import type {
   InvoiceUpdateRequest,
   InvoiceUpdateResponse,
   FileListResponse,
+  SupplierByEmailListResponse,
+  SupplierByEmailCreate,
+  SupplierByEmail,
+  DeleteResponse,
 } from "./types";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
@@ -83,7 +87,43 @@ export async function fetchFiles(): Promise<FileListResponse> {
   return handleResponse<FileListResponse>(res);
 }
 
-/** Get the URL for streaming a PDF by filename. */
+/** Get the URL for streaming a PDF by its relative path. */
 export function filePdfUrl(filename: string): string {
-  return `${BASE}/api/files/${encodeURIComponent(filename)}/pdf`;
+  // Encode each path segment individually so slashes are preserved
+  const encoded = filename
+    .split("/")
+    .map((seg) => encodeURIComponent(seg))
+    .join("/");
+  return `${BASE}/api/files/${encoded}/pdf`;
+}
+
+// ── Supplier-by-Email ────────────────────────────────────
+
+/** List all supplier-email mappings. */
+export async function fetchSuppliers(): Promise<SupplierByEmailListResponse> {
+  const res = await fetch(`${BASE}/api/suppliers`, {
+    headers: headers(),
+  });
+  return handleResponse<SupplierByEmailListResponse>(res);
+}
+
+/** Create a new supplier-email mapping. */
+export async function createSupplier(
+  payload: SupplierByEmailCreate
+): Promise<SupplierByEmail> {
+  const res = await fetch(`${BASE}/api/suppliers`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse<SupplierByEmail>(res);
+}
+
+/** Delete a supplier-email mapping by ID. */
+export async function deleteSupplier(id: number): Promise<DeleteResponse> {
+  const res = await fetch(`${BASE}/api/suppliers/${id}`, {
+    method: "DELETE",
+    headers: headers(),
+  });
+  return handleResponse<DeleteResponse>(res);
 }

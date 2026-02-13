@@ -15,6 +15,12 @@ function formatSize(bytes: number): string {
   return `${(kb / 1024).toFixed(1)} MB`;
 }
 
+/** Extract just the basename from a possibly nested path. */
+function basename(filepath: string): string {
+  const idx = filepath.lastIndexOf("/");
+  return idx >= 0 ? filepath.substring(idx + 1) : filepath;
+}
+
 export default function FileList({ selectedFile, onSelect }: Props) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,11 +41,15 @@ export default function FileList({ selectedFile, onSelect }: Props) {
   }, []);
 
   const filtered = filter
-    ? files.filter((f) =>
-        f.filename.toLowerCase().includes(filter.toLowerCase()) ||
-        (f.supplier_name || "").toLowerCase().includes(filter.toLowerCase()) ||
-        (f.invoice_number || "").toLowerCase().includes(filter.toLowerCase())
-      )
+    ? files.filter((f) => {
+        const q = filter.toLowerCase();
+        return (
+          f.filename.toLowerCase().includes(q) ||
+          basename(f.filename).toLowerCase().includes(q) ||
+          (f.supplier_name || "").toLowerCase().includes(q) ||
+          (f.invoice_number || "").toLowerCase().includes(q)
+        );
+      })
     : files;
 
   return (
@@ -75,7 +85,7 @@ export default function FileList({ selectedFile, onSelect }: Props) {
               >
                 <span className="file-item-icon">📄</span>
                 <div className="file-item-info">
-                  <span className="file-item-name">{file.filename}</span>
+                  <span className="file-item-name">{basename(file.filename)}</span>
                   <span className="file-item-meta">
                     {formatSize(file.size)}
                     {file.supplier_name && ` · ${file.supplier_name}`}

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.security import ApiKeyMiddleware
-from app.routers import documents
+from app.routers import documents, suppliers
 
 app = FastAPI(
     title="Invoice Viewer API",
@@ -28,6 +28,7 @@ app.add_middleware(ApiKeyMiddleware)
 
 # ── Routers ──────────────────────────────────────────────
 app.include_router(documents.router)
+app.include_router(suppliers.router)
 
 
 # ── Health check ─────────────────────────────────────────

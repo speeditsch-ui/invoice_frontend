@@ -56,9 +56,14 @@ export default function InvoicesPage() {
     <div className="page">
       <header className="page-header">
         <h1>Rechnungen</h1>
-        <Link to="/viewer" className="btn-sm" style={{ marginLeft: "auto" }}>
-          Datei-Browser
-        </Link>
+        <nav style={{ marginLeft: "auto", display: "flex", gap: "0.5rem" }}>
+          <Link to="/suppliers" className="btn-sm">
+            Lieferanten
+          </Link>
+          <Link to="/viewer" className="btn-sm">
+            Datei-Browser
+          </Link>
+        </nav>
       </header>
 
       <form onSubmit={handleSearch} className="search-bar">

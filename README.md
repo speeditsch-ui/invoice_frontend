@@ -8,7 +8,7 @@ Eine WebApp zum Anzeigen lokal gespeicherter PDFs mit editierbaren, extrahierten
 ┌───────────┐     ┌───────────┐     ┌───────────┐
 │  Frontend  │────▶│  Backend   │────▶│  MariaDB   │
 │  (React)   │     │  (FastAPI) │     │            │
-│  nginx:80  │     │  :8000     │     │  :3306     │
+│  nginx:80  │     │  :8000     │     │  :3307     │
 └───────────┘     └───────────┘     └───────────┘
       │                 │
       │   /api/* proxy  │──▶ /data/pdfs (read-only)
@@ -64,7 +64,7 @@ docker compose down
 | Variable       | Default                   | Beschreibung                                      |
 |----------------|---------------------------|---------------------------------------------------|
 | `DB_HOST`      | `host.docker.internal`    | Datenbank-Host (mit Docker: Host-MariaDB; lokal: `localhost`) |
-| `DB_PORT`      | `3306`                    | Datenbank-Port                                    |
+| `DB_PORT`      | `3307`                    | Datenbank-Port                                    |
 | `DB_NAME`      | `result_viewer`           | Datenbankname                                     |
 | `DB_USER`      | `root`                    | Datenbank-Benutzer                                |
 | `DB_PASS`      | `changeme`                | Datenbank-Passwort                                |
@@ -100,7 +100,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # Umgebungsvariablen setzen oder .env im backend/-Ordner
-export DB_HOST=localhost DB_PORT=3306 DB_NAME=result_viewer DB_USER=root DB_PASS=changeme
+export DB_HOST=localhost DB_PORT=3307 DB_NAME=result_viewer DB_USER=root DB_PASS=changeme
 export PDF_ROOT=/pfad/zu/pdfs
 
 uvicorn app.main:app --reload --port 8000

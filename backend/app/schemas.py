@@ -43,6 +43,16 @@ class InvoiceDetail(BaseModel):
     created_at: Optional[datetime] = None
     pdf_sha256: str
     has_pdf: bool = False
+    # Spalten aus telegram_invoices
+    filename: Optional[str] = None
+    telegram_text: Optional[str] = None
+    zahlungstyp: Optional[str] = None
+    ocr_text: Optional[str] = None
+    llm_json: Optional[str] = None
+    confidence: Optional[Decimal] = None
+    updated_at: Optional[datetime] = None
+    erledigt: bool = False
+    erledigt_datum: Optional[date] = None
 
     model_config = {"from_attributes": True}
 
@@ -58,6 +68,14 @@ class InvoiceUpdateRequest(BaseModel):
     vat_rate: Optional[Decimal] = None
     vat_amount: Optional[Decimal] = None
     source_email: Optional[str] = None
+    filename: Optional[str] = None
+    telegram_text: Optional[str] = None
+    zahlungstyp: Optional[str] = None
+    ocr_text: Optional[str] = None
+    llm_json: Optional[str] = None
+    confidence: Optional[Decimal] = None
+    erledigt: Optional[bool] = None
+    erledigt_datum: Optional[date] = None
 
 
 class InvoiceUpdateResponse(BaseModel):
@@ -79,3 +97,41 @@ class FileEntry(BaseModel):
 class FileListResponse(BaseModel):
     total: int
     files: list[FileEntry]
+
+
+# ── Supplier by Email ─────────────────────────────────────
+
+class SupplierByEmailItem(BaseModel):
+    id: int
+    supplier_name: str
+    email: str
+
+    model_config = {"from_attributes": True}
+
+
+class SupplierByEmailCreate(BaseModel):
+    supplier_name: str
+    email: str
+
+
+class SupplierByEmailListResponse(BaseModel):
+    total: int
+    suppliers: list[SupplierByEmailItem]
+
+
+class DeleteResponse(BaseModel):
+    deleted: bool
+    message: str
+
+
+# ── Datenquelle ───────────────────────────────────────────
+
+class DatenquelleItem(BaseModel):
+    id: int
+    plattform: str
+
+    model_config = {"from_attributes": True}
+
+
+class DatenquelleCreate(BaseModel):
+    plattform: str

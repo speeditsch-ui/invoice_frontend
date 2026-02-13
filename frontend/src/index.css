@@ -684,6 +684,74 @@ body {
   font-size: 0.75rem;
 }
 
+/* ── Supplier Add Form ───────────────────────────────── */
+.supplier-add-form {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.supplier-add-form h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.supplier-add-fields {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.supplier-add-fields input {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border 0.15s;
+}
+
+.supplier-add-fields input:focus {
+  border-color: var(--primary);
+}
+
+.supplier-add-fields button {
+  padding: 0.5rem 1.25rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.supplier-add-fields button:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.supplier-add-fields button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── Delete Button ───────────────────────────────────── */
+.btn-delete {
+  background: var(--error) !important;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-delete:hover {
+  background: #dc2626 !important;
+}
+
 /* ── Responsive ──────────────────────────────────────── */
 @media (max-width: 768px) {
   .viewer-layout {

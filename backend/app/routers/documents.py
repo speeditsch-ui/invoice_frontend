@@ -87,8 +87,8 @@ def list_files(db: Session = Depends(get_db)):
     if not root.exists():
         return FileListResponse(total=0, files=[])
 
-    # Collect all PDF files
-    pdf_files = sorted(root.glob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+    # Collect all PDF files (recursively, so sub-directories like invoices/inbox/… are included)
+    pdf_files = sorted(root.rglob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
 
     # Build lookup maps from DB: filename -> invoice, sha256 -> invoice
     all_invoices = db.query(Invoice).all()
@@ -112,7 +112,9 @@ def list_files(db: Session = Depends(get_db)):
     entries: list[FileEntry] = []
     for pdf in pdf_files:
         stat = pdf.stat()
-        fname = pdf.name
+        # Use relative path from PDF_ROOT so sub-directory files can be served back
+        relative_path = str(pdf.relative_to(root))
+        fname = pdf.name  # just the basename for matching against DB
 
         # Try to match: first by filename, then by sha256 (filename without .pdf)
         inv = path_map.get(fname)
@@ -121,7 +123,7 @@ def list_files(db: Session = Depends(get_db)):
             inv = sha_map.get(stem)
 
         entries.append(FileEntry(
-            filename=fname,
+            filename=relative_path,
             size=stat.st_size,
             modified=datetime.fromtimestamp(stat.st_mtime),
             invoice_id=inv.id if inv else None,
@@ -134,9 +136,9 @@ def list_files(db: Session = Depends(get_db)):
 
 # ── GET /api/files/{filename}/pdf ────────────────────────
 
-@router.get("/files/{filename}/pdf")
+@router.get("/files/{filename:path}/pdf")
 def get_file_pdf(filename: str):
-    """Serve a PDF file directly by filename."""
+    """Serve a PDF file by its relative path from PDF_ROOT."""
     root = Path(settings.pdf_root).resolve()
     full = (root / filename).resolve()
 
@@ -149,7 +151,7 @@ def get_file_pdf(filename: str):
     return FileResponse(
         path=str(full),
         media_type="application/pdf",
-        filename=filename,
+        filename=full.name,
     )
 
 
