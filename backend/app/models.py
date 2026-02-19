@@ -34,6 +34,7 @@ class Invoice(Base):
     invoice_number: Optional[str] = Column(String(64), nullable=True)
     invoice_date: Optional[date] = Column(Date, nullable=True)
     net_total: Optional[Decimal] = Column(DECIMAL(12, 2), nullable=True)
+    gross_total: Optional[Decimal] = Column(DECIMAL(12, 2), nullable=True)
     currency: Optional[str] = Column(CHAR(3), nullable=True)
     vat_rate: Optional[Decimal] = Column(DECIMAL(5, 2), nullable=True)
     vat_amount: Optional[Decimal] = Column(DECIMAL(12, 2), nullable=True)
