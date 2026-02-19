@@ -6,6 +6,7 @@ export interface InvoiceListItem {
   invoice_number: string | null;
   invoice_date: string | null;
   net_total: number | null;
+  gross_total: number | null;
   currency: string | null;
   source_email: string;
   created_at: string | null;
@@ -22,6 +23,7 @@ export interface InvoiceDetail {
   invoice_number: string | null;
   invoice_date: string | null;
   net_total: number | null;
+  gross_total: number | null;
   currency: string | null;
   vat_rate: number | null;
   vat_amount: number | null;
@@ -38,6 +40,7 @@ export interface InvoiceUpdateRequest {
   invoice_number?: string | null;
   invoice_date?: string | null;
   net_total?: number | null;
+  gross_total?: number | null;
   currency?: string | null;
   vat_rate?: number | null;
   vat_amount?: number | null;

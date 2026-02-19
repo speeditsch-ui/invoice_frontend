@@ -91,6 +91,7 @@ export default function InvoicesPage() {
                   <th>Rechnungsnr.</th>
                   <th>Datum</th>
                   <th className="col-right">Netto</th>
+                  <th className="col-right">Brutto</th>
                   <th>E-Mail</th>
                   <th></th>
                 </tr>
@@ -98,7 +99,7 @@ export default function InvoicesPage() {
               <tbody>
                 {invoices.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="empty-row">
+                    <td colSpan={8} className="empty-row">
                       Keine Rechnungen gefunden.
                     </td>
                   </tr>
@@ -110,6 +111,7 @@ export default function InvoicesPage() {
                       <td>{inv.invoice_number || <span className="text-muted">–</span>}</td>
                       <td>{formatDate(inv.invoice_date)}</td>
                       <td className="col-right">{formatEur(inv.net_total, inv.currency)}</td>
+                      <td className="col-right">{formatEur(inv.gross_total, inv.currency)}</td>
                       <td className="col-email">{inv.source_email}</td>
                       <td>
                         <Link to={`/viewer/${inv.id}`} className="btn-sm">

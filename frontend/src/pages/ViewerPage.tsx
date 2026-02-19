@@ -1,21 +1,23 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { fetchInvoice, updateInvoice, pdfUrl, filePdfUrl } from "../api";
+import { useParams, Link } from "react-router-dom";
+import { fetchInvoice, updateInvoice, pdfUrl, fileUrl, isImageFile } from "../api";
 import type { InvoiceDetail, InvoiceUpdateRequest, FileEntry } from "../types";
 import PdfViewer from "../components/PdfViewer";
+import ImageViewer from "../components/ImageViewer";
 import InvoiceFields from "../components/InvoiceFields";
 import FileList from "../components/FileList";
 
 export default function ViewerPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
 
   // Current invoice from DB (if any)
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
-  // Currently displayed PDF URL
-  const [currentPdfUrl, setCurrentPdfUrl] = useState<string | null>(null);
-  // Currently selected filename
+  // Currently displayed file URL (PDF or image)
+  const [currentFileUrl, setCurrentFileUrl] = useState<string | null>(null);
+  // Currently selected filename (used to decide PDF vs Image viewer)
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  // Full file list (for prev/next navigation)
+  const [fileList, setFileList] = useState<FileEntry[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,16 +25,13 @@ export default function ViewerPage() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
-  // Load invoice by ID (from route param or file selection)
+  // Load invoice data (without touching the file URL)
   const loadInvoice = useCallback(async (invoiceId: number) => {
     setLoading(true);
     setError(null);
     try {
       const data = await fetchInvoice(invoiceId);
       setInvoice(data);
-      if (data.has_pdf) {
-        setCurrentPdfUrl(pdfUrl(invoiceId));
-      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unbekannter Fehler");
     } finally {
@@ -40,31 +39,45 @@ export default function ViewerPage() {
     }
   }, []);
 
-  // Load from route param on mount / change
+  // On mount: if we arrived via /invoices/:id or /viewer/:id, load that invoice + set PDF URL
   useEffect(() => {
     if (id) {
       const invoiceId = Number(id);
       if (!isNaN(invoiceId)) {
-        loadInvoice(invoiceId);
+        (async () => {
+          setLoading(true);
+          setError(null);
+          try {
+            const data = await fetchInvoice(invoiceId);
+            setInvoice(data);
+            if (data.has_pdf) {
+              setCurrentFileUrl(pdfUrl(invoiceId));
+              // Set a synthetic selectedFile so isImageFile can detect the type
+              setSelectedFile(data.pdf_path || `invoice_${invoiceId}.pdf`);
+            }
+          } catch (e) {
+            setError(e instanceof Error ? e.message : "Unbekannter Fehler");
+          } finally {
+            setLoading(false);
+          }
+        })();
       }
     }
-  }, [id, loadInvoice]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Handle file selection from sidebar
+  // Handle file selection from sidebar — pure state, no navigation
   const handleFileSelect = useCallback((file: FileEntry) => {
     setSelectedFile(file.filename);
-    setCurrentPdfUrl(filePdfUrl(file.filename));
+    setCurrentFileUrl(fileUrl(file.filename));
+    setError(null);
 
     if (file.invoice_id) {
-      // Navigate to invoice route (updates URL + loads invoice data)
-      navigate(`/invoices/${file.invoice_id}`, { replace: true });
+      loadInvoice(file.invoice_id);
     } else {
-      // No linked invoice — just show the PDF, clear invoice data
-      navigate("/invoices", { replace: true });
       setInvoice(null);
-      setError(null);
     }
-  }, [navigate]);
+  }, [loadInvoice]);
 
   const handleSave = async (updates: InvoiceUpdateRequest) => {
     if (!invoice) return;
@@ -87,12 +100,39 @@ export default function ViewerPage() {
     }
   };
 
+  // Callback when FileList has loaded
+  const handleFilesLoaded = useCallback((files: FileEntry[]) => {
+    setFileList(files);
+  }, []);
+
+  // Prev / Next navigation
+  const currentIndex = selectedFile
+    ? fileList.findIndex((f) => f.filename === selectedFile)
+    : -1;
+
+  const hasPrev = currentIndex > 0;
+  const hasNext = currentIndex >= 0 && currentIndex < fileList.length - 1;
+
+  const handlePrev = useCallback(() => {
+    if (hasPrev) {
+      const prev = fileList[currentIndex - 1];
+      handleFileSelect(prev);
+    }
+  }, [hasPrev, fileList, currentIndex, handleFileSelect]);
+
+  const handleNext = useCallback(() => {
+    if (hasNext) {
+      const next = fileList[currentIndex + 1];
+      handleFileSelect(next);
+    }
+  }, [hasNext, fileList, currentIndex, handleFileSelect]);
+
   const title = invoice
     ? invoice.supplier_name
       ? `${invoice.supplier_name} – ${invoice.invoice_number || "Ohne Nr."}`
       : `Rechnung #${invoice.id}`
     : selectedFile
-      ? selectedFile
+      ? selectedFile.split("/").pop() || selectedFile
       : "Datei auswählen";
 
   return (
@@ -102,22 +142,48 @@ export default function ViewerPage() {
           ← Liste
         </Link>
         <h2>{title}</h2>
+
+        <div className="viewer-nav-buttons">
+          <button
+            className="btn-nav"
+            disabled={!hasPrev}
+            onClick={handlePrev}
+            title="Vorherige Datei"
+          >
+            ◀ Zurück
+          </button>
+          <span className="nav-position">
+            {currentIndex >= 0
+              ? `${currentIndex + 1} / ${fileList.length}`
+              : "–"}
+          </span>
+          <button
+            className="btn-nav"
+            disabled={!hasNext}
+            onClick={handleNext}
+            title="Nächste Datei"
+          >
+            Weiter ▶
+          </button>
+        </div>
       </header>
 
       <div className="viewer-layout-3col">
         {/* Left: File list sidebar */}
         <div className="viewer-filelist">
-          <FileList selectedFile={selectedFile} onSelect={handleFileSelect} />
+          <FileList selectedFile={selectedFile} onSelect={handleFileSelect} onFilesLoaded={handleFilesLoaded} />
         </div>
 
-        {/* Center: PDF viewer */}
+        {/* Center: PDF / Image viewer */}
         <div className="viewer-pdf">
           {loading ? (
             <p className="loading-text">Laden…</p>
           ) : error ? (
             <div className="error-banner" style={{ margin: "1rem" }}>{error}</div>
-          ) : currentPdfUrl ? (
-            <PdfViewer url={currentPdfUrl} />
+          ) : currentFileUrl && selectedFile && isImageFile(selectedFile) ? (
+            <ImageViewer url={currentFileUrl} />
+          ) : currentFileUrl ? (
+            <PdfViewer url={currentFileUrl} />
           ) : (
             <div className="no-pdf">
               <div className="no-pdf-message">

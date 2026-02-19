@@ -14,6 +14,7 @@ class InvoiceListItem(BaseModel):
     invoice_number: Optional[str] = None
     invoice_date: Optional[date] = None
     net_total: Optional[Decimal] = None
+    gross_total: Optional[Decimal] = None
     currency: Optional[str] = None
     source_email: str
     created_at: Optional[datetime] = None
@@ -34,6 +35,7 @@ class InvoiceDetail(BaseModel):
     invoice_number: Optional[str] = None
     invoice_date: Optional[date] = None
     net_total: Optional[Decimal] = None
+    gross_total: Optional[Decimal] = None
     currency: Optional[str] = None
     vat_rate: Optional[Decimal] = None
     vat_amount: Optional[Decimal] = None
@@ -64,6 +66,7 @@ class InvoiceUpdateRequest(BaseModel):
     invoice_number: Optional[str] = None
     invoice_date: Optional[date] = None
     net_total: Optional[Decimal] = None
+    gross_total: Optional[Decimal] = None
     currency: Optional[str] = None
     vat_rate: Optional[Decimal] = None
     vat_amount: Optional[Decimal] = None

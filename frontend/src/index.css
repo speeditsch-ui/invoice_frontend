@@ -272,6 +272,44 @@ body {
   text-decoration: underline;
 }
 
+/* ── Prev / Next Navigation Buttons ─────────────────── */
+.viewer-nav-buttons {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.btn-nav {
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+.btn-nav:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: #eff6ff;
+}
+
+.btn-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.nav-position {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  min-width: 3rem;
+  text-align: center;
+}
+
 .viewer-layout {
   flex: 1;
   display: flex;
@@ -615,6 +653,67 @@ body {
   border-radius: 3px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+/* ── Image Viewer ────────────────────────────────────── */
+.image-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.image-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.image-controls button {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.image-controls button:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.image-zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.image-fit-btn {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.image-wrapper {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.image-wrapper img {
+  max-width: none;
+  height: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: white;
+  transition: transform 0.15s ease;
+  user-select: none;
 }
 
 /* ── No PDF placeholder ─────────────────────────────── */

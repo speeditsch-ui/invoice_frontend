@@ -87,14 +87,30 @@ export async function fetchFiles(): Promise<FileListResponse> {
   return handleResponse<FileListResponse>(res);
 }
 
-/** Get the URL for streaming a PDF by its relative path. */
-export function filePdfUrl(filename: string): string {
+/** Get the URL for streaming a file (PDF or image) by its relative path. */
+export function fileUrl(filename: string): string {
   // Encode each path segment individually so slashes are preserved
   const encoded = filename
     .split("/")
     .map((seg) => encodeURIComponent(seg))
     .join("/");
-  return `${BASE}/api/files/${encoded}/pdf`;
+  return `${BASE}/api/files/${encoded}/raw`;
+}
+
+/** @deprecated Use fileUrl instead. Kept for backwards compatibility. */
+export function filePdfUrl(filename: string): string {
+  return fileUrl(filename);
+}
+
+/** Check whether a filename refers to an image (jpg/jpeg/png). */
+export function isImageFile(filename: string): boolean {
+  const lower = filename.toLowerCase();
+  return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png");
+}
+
+/** Check whether a filename refers to a PDF. */
+export function isPdfFile(filename: string): boolean {
+  return filename.toLowerCase().endsWith(".pdf");
 }
 
 // ── Supplier-by-Email ────────────────────────────────────

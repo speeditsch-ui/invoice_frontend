@@ -1,5 +1,6 @@
 """Invoice-related API endpoints."""
 
+import mimetypes
 import os
 from datetime import datetime
 from pathlib import Path
@@ -64,31 +65,49 @@ def _resolve_pdf_path(raw_path: Optional[str]) -> Optional[Path]:
     if full.exists() and full.is_file():
         return full
 
-    # Also try looking up by sha256-named file in PDF_ROOT
+    # Fallback: search recursively by basename (files may be in sub-directories)
+    basename = Path(relative).name
+    if basename:
+        matches = list(root.rglob(basename))
+        if matches:
+            return matches[0]
+
     return None
 
 
 def _find_pdf_by_sha256(sha256: str) -> Optional[Path]:
-    """Try to find a PDF file named <sha256>.pdf in PDF_ROOT."""
+    """Try to find a PDF file named <sha256>.pdf in PDF_ROOT (including sub-dirs)."""
     root = Path(settings.pdf_root).resolve()
+    # Try direct path first
     candidate = root / f"{sha256}.pdf"
     if candidate.exists() and candidate.is_file():
         return candidate
+    # Fallback: search recursively
+    matches = list(root.rglob(f"{sha256}.pdf"))
+    if matches:
+        return matches[0]
     return None
+
+
+# Supported file extensions (lowercase, with dot)
+_SUPPORTED_EXTENSIONS = {".pdf", ".jpg", ".jpeg", ".png"}
 
 
 # ── GET /api/files ───────────────────────────────────────
 
 @router.get("/files", response_model=FileListResponse)
 def list_files(db: Session = Depends(get_db)):
-    """List all PDF files in PDF_ROOT with their linked invoice (if any)."""
+    """List all supported files (PDF + images) in PDF_ROOT with their linked invoice (if any)."""
     root = Path(settings.pdf_root).resolve()
 
     if not root.exists():
         return FileListResponse(total=0, files=[])
 
-    # Collect all PDF files (recursively, so sub-directories like invoices/inbox/… are included)
-    pdf_files = sorted(root.rglob("*.pdf"), key=lambda p: p.stat().st_mtime, reverse=True)
+    # Collect all supported files recursively
+    all_files: list[Path] = []
+    for ext in _SUPPORTED_EXTENSIONS:
+        all_files.extend(root.rglob(f"*{ext}"))
+    all_files = sorted(all_files, key=lambda p: p.stat().st_mtime, reverse=True)
 
     # Build lookup maps from DB: filename -> invoice, sha256 -> invoice
     all_invoices = db.query(Invoice).all()
@@ -96,31 +115,34 @@ def list_files(db: Session = Depends(get_db)):
     sha_map: dict[str, Invoice] = {}
     path_map: dict[str, Invoice] = {}
     for inv in all_invoices:
-        sha_map[inv.pdf_sha256] = inv
+        if inv.pdf_sha256:
+            sha_map[inv.pdf_sha256] = inv
         if inv.pdf_path:
-            # Extract just the filename from various path formats
             raw = inv.pdf_path.strip()
-            if raw.startswith(_N8N_PREFIX):
-                fname = raw[len(_N8N_PREFIX):]
-            elif "/" in raw:
-                fname = Path(raw).name
-            else:
-                fname = raw
-            if fname:
-                path_map[fname] = inv
+            # Store the basename as key so it matches regardless of directory
+            basename = Path(raw).name
+            if basename:
+                path_map[basename] = inv
 
     entries: list[FileEntry] = []
-    for pdf in pdf_files:
-        stat = pdf.stat()
+    for f in all_files:
+        stat = f.stat()
         # Use relative path from PDF_ROOT so sub-directory files can be served back
-        relative_path = str(pdf.relative_to(root))
-        fname = pdf.name  # just the basename for matching against DB
+        relative_path = str(f.relative_to(root))
+        fname = f.name  # basename for matching against DB
 
-        # Try to match: first by filename, then by sha256 (filename without .pdf)
+        # Try to match: first by basename, then by sha256 in filename
         inv = path_map.get(fname)
         if not inv:
-            stem = pdf.stem  # filename without extension
+            stem = f.stem  # filename without extension (may be a sha256 hash)
             inv = sha_map.get(stem)
+        if not inv:
+            # Try matching sha256 embedded in filename (e.g. "..._1270d22ffc62.jpg")
+            # Some filenames end with a partial or full sha256
+            for sha, candidate_inv in sha_map.items():
+                if sha and fname.find(sha[:12]) >= 0:
+                    inv = candidate_inv
+                    break
 
         entries.append(FileEntry(
             filename=relative_path,
@@ -134,11 +156,11 @@ def list_files(db: Session = Depends(get_db)):
     return FileListResponse(total=len(entries), files=entries)
 
 
-# ── GET /api/files/{filename}/pdf ────────────────────────
+# ── GET /api/files/{filename}/raw ────────────────────────
 
-@router.get("/files/{filename:path}/pdf")
-def get_file_pdf(filename: str):
-    """Serve a PDF file by its relative path from PDF_ROOT."""
+@router.get("/files/{filename:path}/raw")
+def get_file_raw(filename: str):
+    """Serve any supported file (PDF or image) by its relative path from PDF_ROOT."""
     root = Path(settings.pdf_root).resolve()
     full = (root / filename).resolve()
 
@@ -148,11 +170,27 @@ def get_file_pdf(filename: str):
     if not full.exists() or not full.is_file():
         raise HTTPException(status_code=404, detail="File not found")
 
+    # Only allow supported extensions
+    if full.suffix.lower() not in _SUPPORTED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    mime, _ = mimetypes.guess_type(str(full))
+    if not mime:
+        mime = "application/octet-stream"
+
     return FileResponse(
         path=str(full),
-        media_type="application/pdf",
+        media_type=mime,
         filename=full.name,
     )
+
+
+# ── GET /api/files/{filename}/pdf  (legacy, kept for backwards compat) ──
+
+@router.get("/files/{filename:path}/pdf")
+def get_file_pdf(filename: str):
+    """Serve a PDF file by its relative path from PDF_ROOT (legacy endpoint)."""
+    return get_file_raw(filename)
 
 
 # ── GET /api/invoices ────────────────────────────────────
@@ -192,6 +230,7 @@ def list_invoices(
                 invoice_number=inv.invoice_number,
                 invoice_date=inv.invoice_date,
                 net_total=inv.net_total,
+                gross_total=inv.gross_total,
                 currency=inv.currency,
                 source_email=inv.source_email,
                 created_at=inv.created_at,
@@ -218,6 +257,7 @@ def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
         invoice_number=inv.invoice_number,
         invoice_date=inv.invoice_date,
         net_total=inv.net_total,
+        gross_total=inv.gross_total,
         currency=inv.currency,
         vat_rate=inv.vat_rate,
         vat_amount=inv.vat_amount,

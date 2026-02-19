@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { fetchFiles } from "../api";
+import { fetchFiles, isImageFile } from "../api";
 import type { FileEntry } from "../types";
 
 interface Props {
   selectedFile: string | null;
   onSelect: (file: FileEntry) => void;
+  /** Called once when the file list has been loaded from the API. */
+  onFilesLoaded?: (files: FileEntry[]) => void;
 }
 
 /** Format bytes to a human-readable size. */
@@ -21,7 +23,7 @@ function basename(filepath: string): string {
   return idx >= 0 ? filepath.substring(idx + 1) : filepath;
 }
 
-export default function FileList({ selectedFile, onSelect }: Props) {
+export default function FileList({ selectedFile, onSelect, onFilesLoaded }: Props) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,12 +34,14 @@ export default function FileList({ selectedFile, onSelect }: Props) {
       try {
         const data = await fetchFiles();
         setFiles(data.files);
+        onFilesLoaded?.(data.files);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Fehler beim Laden");
       } finally {
         setLoading(false);
       }
     })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = filter
@@ -83,7 +87,7 @@ export default function FileList({ selectedFile, onSelect }: Props) {
                 onClick={() => onSelect(file)}
                 title={file.filename}
               >
-                <span className="file-item-icon">📄</span>
+                <span className="file-item-icon">{isImageFile(file.filename) ? "🖼️" : "📄"}</span>
                 <div className="file-item-info">
                   <span className="file-item-name">{basename(file.filename)}</span>
                   <span className="file-item-meta">
